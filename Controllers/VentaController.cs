@@ -56,7 +56,7 @@ namespace PruebaDapper.Controllers
             {
                 var parameters = new DynamicParameters();
                 parameters.Add("@Cliente", venta.Cliente);
-                parameters.Add("@Fechaventa", venta.FechaVenta);
+                parameters.Add("@Fechaventa", venta.FechaVenta );
                 parameters.Add("@Observacion", venta.Observacion);
 
                 var result = connection.ExecuteScalar<int>("sp_post_venta", parameters, commandType: CommandType.StoredProcedure);
