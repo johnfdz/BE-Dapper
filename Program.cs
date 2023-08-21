@@ -1,3 +1,4 @@
+using PruebaDapper.EXCELGenerator;
 using PruebaDapper.PDFGenerator;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ builder.Services.AddCors(option =>
 
 builder.Services.AddScoped<PDFCliente>();
 builder.Services.AddScoped<PDFVehiculo>();
+builder.Services.AddScoped<EXCELCliente>();
 
 var app = builder.Build();
 

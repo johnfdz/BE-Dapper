@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using PruebaDapper.Models;
 using System.Data;
 using System.Data.SqlClient;
+using PruebaDapper.EXCELGenerator;
 using PruebaDapper.PDFGenerator;
 
 namespace PruebaDapper.Controllers
@@ -15,12 +16,14 @@ namespace PruebaDapper.Controllers
         private readonly ILogger<ClienteController> _logger;
         private readonly string connectionString;
         private readonly PDFCliente _pdf;
+        private readonly EXCELCliente _excel;
 
-        public ClienteController(ILogger<ClienteController> logger, IConfiguration configuration, PDFCliente pdf)
+        public ClienteController(ILogger<ClienteController> logger, IConfiguration configuration, PDFCliente pdf, EXCELCliente excel)
         {
             _logger = logger;
             connectionString = configuration.GetConnectionString("conexion");
             _pdf = pdf;
+            _excel = excel;
 
         }
 
@@ -56,6 +59,25 @@ namespace PruebaDapper.Controllers
             System.IO.File.Delete(outputPath); // Eliminar el archivo temporal
 
             return File(fileBytes, "application/pdf", "clientes.pdf");
+        }
+
+        [HttpPost("GetExcel")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetExcel([FromBody] List<Cliente> clientes)
+        {
+            string outputPath = "InformesTEMP/temporal.xlsx";
+
+            // Tipo de informe para el encabezado
+            string reportType = "Informe de Clientes";
+
+            // Generar el archivo PDF utilizando el método GeneratePDF
+            _excel.GenerateExcelClientes(clientes, outputPath, reportType);
+
+            // Devolver el archivo PDF como respuesta
+            byte[] fileBytes = System.IO.File.ReadAllBytes(outputPath);
+            System.IO.File.Delete(outputPath); // Eliminar el archivo temporal
+
+            return File(fileBytes, "application/xlsx", "reporteclientes.xlsx");
         }
 
         [HttpPost]
