@@ -1,3 +1,5 @@
+using PruebaDapper.PDFGenerator;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -11,6 +13,9 @@ builder.Services.AddCors(option =>
 {
     option.AddPolicy("AllowWebApp", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
+
+builder.Services.AddScoped<PDFCliente>();
+builder.Services.AddScoped<PDFVehiculo>();
 
 var app = builder.Build();
 

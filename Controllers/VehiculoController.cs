@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using Dapper;
 using PruebaDapper.Models;
 using System.Data;
+using PruebaDapper.PDFGenerator;
 
 namespace PruebaDapper.Controllers
 {
@@ -14,12 +15,13 @@ namespace PruebaDapper.Controllers
 
         private readonly ILogger<VehiculoController> _logger;
         private readonly string connectionString;
+        private readonly PDFVehiculo _pdf;
 
-        public VehiculoController(ILogger<VehiculoController> logger, IConfiguration configuration)
+        public VehiculoController(ILogger<VehiculoController> logger, IConfiguration configuration, PDFVehiculo pdf)
         {
             _logger = logger;
             connectionString = configuration.GetConnectionString("conexion");
-
+            _pdf = pdf;
         }
 
         [HttpGet]
@@ -34,6 +36,25 @@ namespace PruebaDapper.Controllers
             var clientes = await connection.QueryAsync(query);
 
             return Ok(clientes);
+        }
+
+        [HttpPost("GetPDF")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetPDF([FromBody] List<Vehiculo> vehiculos)
+        {
+            string outputPath = "InformesTEMP/temporal.pdf";
+
+            // Tipo de informe para el encabezado
+            string reportType = "Informe de Vehiculos";
+
+            // Generar el archivo PDF utilizando el método GeneratePDF
+            _pdf.GeneratePDF(vehiculos, outputPath, reportType);
+
+            // Devolver el archivo PDF como respuesta
+            byte[] fileBytes = System.IO.File.ReadAllBytes(outputPath);
+            System.IO.File.Delete(outputPath); // Eliminar el archivo temporal
+
+            return File(fileBytes, "application/pdf", "repVehiculos.pdf");
         }
 
         [HttpPost]
