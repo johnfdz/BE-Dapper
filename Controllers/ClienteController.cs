@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using PruebaDapper.Models;
 using System.Data;
 using System.Data.SqlClient;
+using Microsoft.AspNetCore.Cors;
 using PruebaDapper.EXCELGenerator;
 using PruebaDapper.PDFGenerator;
 
@@ -24,7 +25,6 @@ namespace PruebaDapper.Controllers
             connectionString = configuration.GetConnectionString("conexion");
             _pdf = pdf;
             _excel = excel;
-
         }
 
 
@@ -42,42 +42,44 @@ namespace PruebaDapper.Controllers
             return Ok(clientes);
         }
 
-        [HttpPost("GetPDF")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetPDF([FromBody] List<Cliente> clientes)
+        [EnableCors]
+        [HttpGet("GetPDF")]
+        public async Task<IActionResult> GetPDF()
         {
-            string outputPath = "InformesTEMP/temporal.pdf";
+            SqlConnection connection = new SqlConnection(connectionString);
+            string query = "SELECT * FROM Cliente";
+            List<Cliente> cliente;
+            cliente = (await connection.QueryAsync<Cliente>(query)).ToList();
 
-            // Tipo de informe para el encabezado
-            string reportType = "Informe de Clientes";
+           var pdf =  await _pdf.GeneratePDF(cliente);
 
-            // Generar el archivo PDF utilizando el método GeneratePDF
-            _pdf.GeneratePDF(clientes, outputPath, reportType);
 
-            // Devolver el archivo PDF como respuesta
-            byte[] fileBytes = System.IO.File.ReadAllBytes(outputPath);
-            System.IO.File.Delete(outputPath); // Eliminar el archivo temporal
-
-            return File(fileBytes, "application/pdf", "clientes.pdf");
+            return File(pdf, "application/pdf");
         }
 
-        [HttpPost("GetExcel")]
+
+        [EnableCors]
+        [HttpGet("GetExcel")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetExcel([FromBody] List<Cliente> clientes)
+        public async Task<IActionResult> GetExcel()
         {
-            string outputPath = "InformesTEMP/temporal.xlsx";
+            SqlConnection connection = new SqlConnection(connectionString);
+
+            //   string outputPath = "InformesTEMP/temporal.xlsx";
 
             // Tipo de informe para el encabezado
             string reportType = "Informe de Clientes";
+            string query = "SELECT * FROM Cliente";
+
+            List<Cliente> cliente;
+            cliente = (await connection.QueryAsync<Cliente>(query)).ToList();
+
 
             // Generar el archivo PDF utilizando el método GeneratePDF
-            _excel.GenerateExcelClientes(clientes, outputPath, reportType);
+            var excel = await _excel.GenerateExcelClientes(cliente, reportType);
 
-            // Devolver el archivo PDF como respuesta
-            byte[] fileBytes = System.IO.File.ReadAllBytes(outputPath);
-            System.IO.File.Delete(outputPath); // Eliminar el archivo temporal
-
-            return File(fileBytes, "application/xlsx", "reporteclientes.xlsx");
+            
+            return File(excel, "application/xlsx", "reporteclientes.xlsx");
         }
 
         [HttpPost]

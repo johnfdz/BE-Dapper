@@ -4,6 +4,8 @@ using System.Data.SqlClient;
 using Dapper;
 using PruebaDapper.Models;
 using System.Data;
+using Microsoft.AspNetCore.Cors;
+using PruebaDapper.EXCELGenerator;
 using PruebaDapper.PDFGenerator;
 
 namespace PruebaDapper.Controllers
@@ -16,12 +18,14 @@ namespace PruebaDapper.Controllers
         private readonly ILogger<VehiculoController> _logger;
         private readonly string connectionString;
         private readonly PDFVehiculo _pdf;
+        private readonly EXCELVehiculo _excel;
 
-        public VehiculoController(ILogger<VehiculoController> logger, IConfiguration configuration, PDFVehiculo pdf)
+        public VehiculoController(ILogger<VehiculoController> logger, IConfiguration configuration, PDFVehiculo pdf, EXCELVehiculo excel)
         {
             _logger = logger;
             connectionString = configuration.GetConnectionString("conexion");
             _pdf = pdf;
+            _excel = excel;
         }
 
         [HttpGet]
@@ -33,28 +37,51 @@ namespace PruebaDapper.Controllers
 
             string query = "SELECT Codigo, Nombre, Marca, Precio, Estado FROM Vehiculo";
 
-            var clientes = await connection.QueryAsync(query);
+            var vehiculos = await connection.QueryAsync(query);
 
-            return Ok(clientes);
+            return Ok(vehiculos);
         }
 
-        [HttpPost("GetPDF")]
+        [EnableCors]
+        [HttpGet("GetPDF")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetPDF([FromBody] List<Vehiculo> vehiculos)
+        public async Task<IActionResult> GetPDF()
         {
-            string outputPath = "InformesTEMP/temporal.pdf";
+            SqlConnection connection = new SqlConnection(connectionString);
 
+            string query = "SELECT Codigo, Nombre, Marca, Precio, Estado FROM Vehiculo";
+
+            List<Vehiculo> vehiculos = new List<Vehiculo>();
+
+            vehiculos = (await connection.QueryAsync<Vehiculo>(query)).ToList();
+
+            _pdf.GeneratePDF(vehiculos);
+
+            var pdf = await _pdf.GeneratePDF(vehiculos);
+
+            return File(pdf,"application/pdf");
+        }
+
+
+        [EnableCors]
+        [HttpGet("GetExcel")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetExcel()
+        {
             // Tipo de informe para el encabezado
             string reportType = "Informe de Vehiculos";
 
-            // Generar el archivo PDF utilizando el método GeneratePDF
-            _pdf.GeneratePDF(vehiculos, outputPath, reportType);
+            SqlConnection connection = new SqlConnection(connectionString);
 
-            // Devolver el archivo PDF como respuesta
-            byte[] fileBytes = System.IO.File.ReadAllBytes(outputPath);
-            System.IO.File.Delete(outputPath); // Eliminar el archivo temporal
+            string query = "SELECT Codigo, Nombre, Marca, Precio, Estado FROM Vehiculo";
 
-            return File(fileBytes, "application/pdf", "repVehiculos.pdf");
+            List<Vehiculo> vehiculos = new List<Vehiculo>();
+
+            vehiculos = (await connection.QueryAsync<Vehiculo>(query)).ToList();
+
+            var excel = await _excel.GenerateExcelVehiculos(vehiculos, reportType);
+
+            return File(excel, "application/xlsx", "reportevehiculos.xlsx");
         }
 
         [HttpPost]

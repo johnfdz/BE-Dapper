@@ -3,27 +3,80 @@ using iTextSharp.text.pdf;
 using PruebaDapper.Models;
 using System.Collections.Generic;
 using System.IO;
+using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.Wordprocessing;
+using Document = iTextSharp.text.Document;
+using Font = iTextSharp.text.Font;
+using Paragraph = iTextSharp.text.Paragraph;
 
 
 namespace PruebaDapper.PDFGenerator
 {
     public class PDFCliente
     {
-        public void GeneratePDF(List<Cliente> clientes, string outputPath, string reportType)
+        public async Task<byte[]> GeneratePDF(List<Cliente> clientes)
         {
+
+            static Font FuenteTituloCabecera(float size) =>
+            new(Font.FontFamily.HELVETICA, size, Font.BOLD, BaseColor.BLACK);
+            using var memoryStream = new MemoryStream();
             Document doc = new Document();
 
-            using (FileStream fs = new FileStream(outputPath, FileMode.Create))
+            using (FileStream fs = new FileStream("Archivo", FileMode.Create))
             {
                 PdfWriter writer = PdfWriter.GetInstance(doc, fs);
+                PdfWriter writer2 = PdfWriter.GetInstance(doc, memoryStream);
+
                 doc.Open();
 
+                var cabecera = new PdfPTable(new[] { 80f, 7f, 13f })
+                {
+                    WidthPercentage = 103f,
+                };
+                // 1 columna 1 fila
+                cabecera.AddCell(new PdfPCell(new Phrase("BIROBID", new Font(Font.FontFamily.HELVETICA, 20, Font.BOLD, BaseColor.BLACK)))
+                {
+                    Border = Rectangle.NO_BORDER,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+
+                });
+                // 2 columna 1 fila
+                cabecera.AddCell(new PdfPCell(new Phrase("Fecha:", new Font(Font.FontFamily.HELVETICA, 10)))
+                {
+                    Border = Rectangle.NO_BORDER,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                });
+
+                // 3 columna 1 fila
+                cabecera.AddCell(new PdfPCell(new Phrase(DateTime.Now.ToShortDateString(), new Font(Font.FontFamily.HELVETICA, 10)))
+                {
+                    Border = Rectangle.NO_BORDER,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                });
+
+                // 1 columna 2 fila
+                cabecera.AddCell(new PdfPCell(new Phrase("INFORME DE CLIENTES", FuenteTituloCabecera(9)))
+                {
+                    Border = Rectangle.NO_BORDER,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+
+
+                });
+                cabecera.AddCell(new PdfPCell(new Phrase("Hora:", new Font(Font.FontFamily.HELVETICA, 10)))
+                {
+                    Border = Rectangle.NO_BORDER,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                });
+
+                cabecera.AddCell(new PdfPCell(new Phrase(DateTime.Now.ToShortTimeString(), new Font(Font.FontFamily.HELVETICA, 10)))
+                {
+                    Border = Rectangle.NO_BORDER,
+                    HorizontalAlignment = Element.ALIGN_CENTER,
+                });
                 // Agregar encabezado
-                Font headerFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, BaseFont.CP1250, BaseFont.EMBEDDED, 12);
-                doc.Add(new Paragraph("Nombre del Informe: " + reportType, headerFont));
-                doc.Add(new Paragraph("Fecha: " + DateTime.Now.ToShortDateString(), headerFont));
-                doc.Add(new Paragraph("Hora: " + DateTime.Now.ToShortTimeString(), headerFont));
-                doc.Add(new Paragraph("------------------------------------"));
+                doc.Add(cabecera);
+
+                doc.Add(new Paragraph(" "));
 
                 // Agregar tabla con lista de clientes
                 PdfPTable table = new PdfPTable(8); // Número de columnas
@@ -52,11 +105,18 @@ namespace PruebaDapper.PDFGenerator
                     table.AddCell((bool)cliente.Estado ? "Activo" : "Inactivo");
                 }
 
+                //cabecera.AddCell(new PdfPCell(table)
+                //{
+                //    Border = Rectangle.NO_BORDER,
+                //    Colspan = 8,
+                //});
+
                 doc.Add(table);
-
                 doc.Close();
+                writer.Close();
+                writer2.Close();
             }
+            return memoryStream.ToArray();
         }
-
     }
 }

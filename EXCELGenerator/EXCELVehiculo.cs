@@ -5,9 +5,9 @@ using Color = System.Drawing.Color;
 
 namespace PruebaDapper.EXCELGenerator
 {
-    public class EXCELCliente
+    public class EXCELVehiculo
     {
-        public async Task<Stream> GenerateExcelClientes(List<Cliente> clientes, string reportType)
+        public async Task<Stream> GenerateExcelVehiculos(List<Vehiculo> vehiculos, string reportType)
         {
 
             SLStyle sheetStyle = new SLStyle();
@@ -23,6 +23,7 @@ namespace PruebaDapper.EXCELGenerator
             MemoryStream ms = new();
 
             using (var sl = new SLDocument())
+                
             {
                 // Encabezados
                 sl.SetCellValue(3, 1, "Fecha");
@@ -34,36 +35,30 @@ namespace PruebaDapper.EXCELGenerator
                 sl.SetCellValue(3, 4, DateTime.Now.ToShortTimeString());
 
                 sl.MergeWorksheetCells(1, 1, 2, 4);
-
-                sl.AutoFitColumn(1, 4);
+                
+                
 
                 sl.SetCellValue(5, 1, "Código");
-                sl.SetCellValue(5, 2, "RUC");
-                sl.SetCellValue(5, 3, "Razón Social");
-                sl.SetCellValue(5, 4, "Teléfono");
-                sl.SetCellValue(5, 5, "Celular");
-                sl.SetCellValue(5, 6, "Correo");
-                sl.SetCellValue(5, 7, "Dirección");
-                sl.SetCellValue(5, 8, "Estado");
+                sl.SetCellValue(5, 2, "Nombre");
+                sl.SetCellValue(5, 3, "Marca");
+                sl.SetCellValue(5, 4, "Precio");
+                sl.SetCellValue(5, 5, "Estado");
 
-                sl.SetCellStyle(5, 1, 5, 8, tableHeader);
+                sl.SetCellStyle(5, 1, 5, 5, tableHeader);
 
                 int rowIndex = 6;
-                foreach (var cliente in clientes)
+
+                foreach (var vehiculo in vehiculos)
                 {
-                    sl.SetCellValue(rowIndex, 1, cliente.Codigo.ToString());
-                    sl.SetCellValue(rowIndex, 2, cliente.Ruc);
-                    sl.SetCellValue(rowIndex, 3, cliente.RazonSocial);
-                    sl.SetCellValue(rowIndex, 4, cliente.Telefono);
-                    sl.SetCellValue(rowIndex, 5, cliente.Celular);
-                    sl.SetCellValue(rowIndex, 6, cliente.Correo);
-                    sl.SetCellValue(rowIndex, 7, cliente.Direccion);
-                    sl.SetCellValue(rowIndex, 8,(bool) cliente.Estado ? "Activo" : "Inactivo");
+                    sl.SetCellValue(rowIndex, 1, vehiculo.Codigo.ToString());
+                    sl.SetCellValue(rowIndex, 2, vehiculo.Nombre);
+                    sl.SetCellValue(rowIndex, 3, vehiculo.Marca);
+                    sl.SetCellValue(rowIndex, 4, vehiculo.Precio.ToString());
+                    sl.SetCellValue(rowIndex, 5, (bool)vehiculo.Estado ? "Activo" : "Inactivo");
                     rowIndex++;
                 }
-
                 sl.AutoFitColumn(1, 20);
-                sl.AutoFitRow(1, rowIndex + 5);
+                sl.AutoFitRow(1, rowIndex +5);
 
                 sl.SaveAs(ms);
             }
