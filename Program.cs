@@ -23,6 +23,8 @@ builder.Services.AddScoped<PDFVehiculo>();
 builder.Services.AddScoped<EXCELCliente>();
 builder.Services.AddScoped<EXCELVehiculo>();
 builder.Services.AddScoped<EjemploPdf>();
+builder.Services.AddScoped<EXCELVentas>();
+builder.Services.AddScoped<PDFVenta>();
 
 
 var app = builder.Build();

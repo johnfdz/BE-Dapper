@@ -55,8 +55,6 @@ namespace PruebaDapper.Controllers
 
             vehiculos = (await connection.QueryAsync<Vehiculo>(query)).ToList();
 
-            _pdf.GeneratePDF(vehiculos);
-
             var pdf = await _pdf.GeneratePDF(vehiculos);
 
             return File(pdf,"application/pdf");
